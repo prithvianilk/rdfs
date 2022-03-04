@@ -6,10 +6,8 @@ import java.util.HashSet;
 
 import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
-import com.rdfs.Constants.MessageStatusCode;
 import com.rdfs.NodeLocation;
 import com.rdfs.SocketIOUtil;
-import com.rdfs.messages.DeleteBlockRequestData;
 import com.rdfs.messages.MessageType;
 
 import picocli.CommandLine.Command;
@@ -69,22 +67,17 @@ public class Delete implements Runnable {
 		}
 	}
 
-	private void deleteBlocksInDataNodes(HashSet<NodeLocation> dataNodeLocations) throws Exception {
+	private void deleteBlocksInDataNodes(HashSet<NodeLocation> dataNodeLocations) throws IOException {
 		for (NodeLocation dataNodeLocation : dataNodeLocations) {
 			deleteBlocksInSingleDataNode(dataNodeLocation);
 		}
 	}
 
-	private void deleteBlocksInSingleDataNode(NodeLocation dataNodeLocation) throws Exception {
+	private void deleteBlocksInSingleDataNode(NodeLocation dataNodeLocation) throws IOException {
 		SocketIOUtil dataNodeSocket = new SocketIOUtil(dataNodeLocation);
 		dataNodeSocket.writeString(MessageType.DELETE_BLOCK_REQUEST.name());
-		dataNodeSocket.writeObject(new DeleteBlockRequestData(dataNodeLocation, rdfsFilename));
+		dataNodeSocket.writeString(rdfsFilename);
 		dataNodeSocket.flush();
-		MessageStatusCode messageStatusCode = MessageStatusCode.valueOf(dataNodeSocket.readString());
-		boolean deleteFailed = messageStatusCode == MessageStatusCode.ERROR;
-		if (deleteFailed) {
-			throw new Exception(String.format("Error: Failed to delete blocks from DataNode %s", dataNodeLocation));
-		}
 		dataNodeSocket.close();
 	}
 }
