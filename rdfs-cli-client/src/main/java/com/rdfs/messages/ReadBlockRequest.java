@@ -1,10 +1,10 @@
 package com.rdfs.messages;
 
-public class ReadBlockRequestData {
+public class ReadBlockRequest {
 	private String filename;
 	private long blockNumber;
 
-	public ReadBlockRequestData(String filename, long blockNumber) {
+	public ReadBlockRequest(String filename, long blockNumber) {
 		this.filename = filename;
 		this.blockNumber = blockNumber;
 	}

@@ -6,11 +6,10 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 import com.rdfs.Constants;
-import com.rdfs.Constants.MessageStatusCode;
 import com.rdfs.NodeLocation;
 import com.rdfs.SocketIOUtil;
 import com.rdfs.messages.MessageType;
-import com.rdfs.messages.WriteBlockRequestData;
+import com.rdfs.messages.WriteBlockRequest;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -34,17 +33,6 @@ public class Write implements Runnable {
 	private SocketIOUtil nameNodeSocket;
 	private FileInputStream fileInputStream;
 
-	private void init() throws UnknownHostException, IOException {
-		file = new File(filename);
-		nameNodeSocket = new SocketIOUtil(new NodeLocation(nameNodeAddress, nameNodePort));
-		fileInputStream = new FileInputStream(file.toPath().toString());
-	}
-
-	private void cleanUp() throws IOException {
-		nameNodeSocket.close();
-		fileInputStream.close();
-	}
-
 	@Override
 	public void run() {
 		try {
@@ -55,6 +43,12 @@ public class Write implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void init() throws UnknownHostException, IOException {
+		file = new File(filename);
+		nameNodeSocket = new SocketIOUtil(new NodeLocation(nameNodeAddress, nameNodePort));
+		fileInputStream = new FileInputStream(file.toPath().toString());
 	}
 
 	private void sendAllCompleteBlocks() throws IOException, ClassNotFoundException, UnknownHostException {
@@ -76,6 +70,22 @@ public class Write implements Runnable {
 		byte[] block = getBlock(Constants.BLOCK_LENGTH);
 		sendBlock(block, blockNumber, dataNodeLocations);
 	}
+
+	private byte[] getBlock(long blockLength) throws IOException {
+		byte block[] = new byte[(int) blockLength];
+		fileInputStream.read(block);
+		return block;
+	}
+
+	private void sendBlock(byte block[], long blockNumber, NodeLocation[] dataNodeLocations) throws IOException {
+		NodeLocation firstDataNodeLocation = dataNodeLocations[0];
+		SocketIOUtil dataNodeSocket = new SocketIOUtil(firstDataNodeLocation);
+		dataNodeSocket.writeString(MessageType.WRITE_BLOCK_REQUEST.name());
+		dataNodeSocket.writeObject(new WriteBlockRequest(block, dataNodeLocations, rdfsFilename, blockNumber));
+		dataNodeSocket.flush();
+		dataNodeSocket.close();
+	}
+
 
 	private void sendExtraBlockIfRemaining() throws IOException, ClassNotFoundException, UnknownHostException {
 		long fileLength = file.length();
@@ -103,22 +113,8 @@ public class Write implements Runnable {
 		return dataNodeLocations;
 	}
 
-	private byte[] getBlock(long blockLength) throws IOException {
-		byte block[] = new byte[(int) blockLength];
-		fileInputStream.read(block);
-		return block;
-	}
-
-	private void sendBlock(byte block[], long blockNumber, NodeLocation[] dataNodeLocations) throws IOException {
-		NodeLocation firstDataNodeLocation = dataNodeLocations[0];
-		SocketIOUtil dataNodeSocket = new SocketIOUtil(firstDataNodeLocation);
-		dataNodeSocket.writeString(MessageType.WRITE_BLOCK_REQUEST.name());
-		dataNodeSocket.writeObject(new WriteBlockRequestData(block, dataNodeLocations, rdfsFilename, blockNumber));
-		dataNodeSocket.flush();
-		MessageStatusCode messageStatusCode = MessageStatusCode.valueOf(dataNodeSocket.readString());
-		if (messageStatusCode == MessageStatusCode.ERROR) {
-			// @todo
-		}
-		dataNodeSocket.close();
+	private void cleanUp() throws IOException {
+		nameNodeSocket.close();
+		fileInputStream.close();
 	}
 }

@@ -8,13 +8,13 @@ import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
 import com.rdfs.SocketIOUtil;
 import com.rdfs.messages.MessageType;
-import com.rdfs.messages.ReadBlockRequestData;
+import com.rdfs.messages.ReadBlockRequest;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "read", description = "Read a file from rdfs")
+@Command(name = "read", description = "Read a file from rdfs and write it's contents to a local file")
 public class Read implements Runnable {
 	@Parameters(index = "0", description = "The local path of the file to write.")
 	private String filename;
@@ -48,45 +48,45 @@ public class Read implements Runnable {
 		nameNodeSocket = new SocketIOUtil(new NodeLocation(nameNodeAddress, nameNodePort));
 	}
 
-	private void cleanUp() throws IOException {
-		fileOutputStream.close();
-		nameNodeSocket.close();
+	private NodeLocation[] getDataNodeLocations() throws IOException, ClassNotFoundException {
+		nameNodeSocket.writeString(MessageType.GET_FILE_LOCATION_REQUEST.name());
+		nameNodeSocket.flush();
+		NodeLocation dataNodeLocations[] = (NodeLocation[]) nameNodeSocket.readObject();
+		return dataNodeLocations;
 	}
 
 	private void readAllBlocks(NodeLocation[] dataNodeLocations)
 			throws UnknownHostException, IOException, ClassNotFoundException {
 		int blockNumber = 1;
 		for (NodeLocation dataNodeLocation : dataNodeLocations) {
-			readBlkAndWriteToFile(blockNumber, dataNodeLocation);
+			readBlkAndWriteToFile(dataNodeLocation, blockNumber);
 			++blockNumber;
 		}
 	}
 
-	private void readBlkAndWriteToFile(int blockNumber, NodeLocation dataNodeLocation)
+	private void readBlkAndWriteToFile(NodeLocation dataNodeLocation, int blockNumber)
 			throws UnknownHostException, IOException, ClassNotFoundException {
 		SocketIOUtil dataNodeSocket = new SocketIOUtil(dataNodeLocation);
-		byte[] blockContents = getBlockContents(blockNumber, dataNodeSocket);
-		writeBlockAndCleanUp(blockContents, dataNodeSocket);
-	}
-
-	private void writeBlockAndCleanUp(byte[] blockContents, SocketIOUtil dataNodeSocket) throws IOException {
+		requestBlockContent(dataNodeSocket, blockNumber);
+		byte[] blockContents = getBlockAndCleanUp(dataNodeSocket, blockNumber);
 		fileOutputStream.write(blockContents);
-		dataNodeSocket.close();
 	}
 
-	private byte[] getBlockContents(int blockNumber, SocketIOUtil dataNodeSocket)
-			throws IOException, ClassNotFoundException {
+	private void requestBlockContent(SocketIOUtil dataNodeSocket, int blockNumber) throws IOException {
 		dataNodeSocket.writeString(MessageType.READ_BLOCK_REQUEST.name());
-		dataNodeSocket.writeObject(new ReadBlockRequestData(rdfsFilename, blockNumber));
+		dataNodeSocket.writeObject(new ReadBlockRequest(rdfsFilename, blockNumber));
 		dataNodeSocket.flush();
+	}
+
+	private byte[] getBlockAndCleanUp(SocketIOUtil dataNodeSocket, int blockNumber)
+			throws IOException, ClassNotFoundException {
 		byte[] blockContents = (byte[]) dataNodeSocket.readObject();
+		dataNodeSocket.close();
 		return blockContents;
 	}
 
-	private NodeLocation[] getDataNodeLocations() throws IOException, ClassNotFoundException {
-		nameNodeSocket.writeString(MessageType.GET_FILE_LOCATION_REQUEST.name());
-		nameNodeSocket.flush();
-		NodeLocation dataNodeLocations[] = (NodeLocation[]) nameNodeSocket.readObject();
-		return dataNodeLocations;
+	private void cleanUp() throws IOException {
+		fileOutputStream.close();
+		nameNodeSocket.close();
 	}
 }

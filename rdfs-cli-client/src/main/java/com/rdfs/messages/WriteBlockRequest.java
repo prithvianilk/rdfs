@@ -2,13 +2,13 @@ package com.rdfs.messages;
 
 import com.rdfs.NodeLocation;
 
-public class WriteBlockRequestData {
+public class WriteBlockRequest {
 	private NodeLocation dataNodeLocations[];
 	private byte block[];
 	private String filename;
 	private long blockNumber;
 
-	public WriteBlockRequestData(byte block[], NodeLocation dataNodeLocations[], String filename,
+	public WriteBlockRequest(byte block[], NodeLocation dataNodeLocations[], String filename,
 			long blockNumber) {
 		this.block = block;
 		this.dataNodeLocations = dataNodeLocations;
