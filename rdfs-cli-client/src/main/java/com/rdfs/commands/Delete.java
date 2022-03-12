@@ -1,13 +1,15 @@
 package com.rdfs.commands;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 
 import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
-import com.rdfs.SocketIOUtil;
 import com.rdfs.messages.MessageType;
 
 import picocli.CommandLine.Command;
@@ -25,14 +27,22 @@ public class Delete implements Runnable {
 	@Option(names = { "--name-node-port" }, description = "Communication Port of the NameNode")
 	private int nameNodePort = Constants.DEFAULT_NAME_NODE_PORT;
 
+	private Socket nameNodeSocket;
+
 	@Override
 	public void run() {
 		try {
+			init();
 			HashSet<NodeLocation> dataNodeLocations = getDataNodeLocations();
 			deleteBlocksInDataNodes(dataNodeLocations);
+			cleanUp();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	void init() throws UnknownHostException, IOException {
+		nameNodeSocket = new Socket(nameNodeAddress, nameNodePort);
 	}
 
 	private HashSet<NodeLocation> getDataNodeLocations()
@@ -44,12 +54,22 @@ public class Delete implements Runnable {
 
 	private BlockReplicasLocation[] getBlockReplicaLocations()
 			throws UnknownHostException, IOException, ClassNotFoundException {
-		SocketIOUtil nameNodeSocket = new SocketIOUtil(new NodeLocation(nameNodeAddress, nameNodePort));
-		nameNodeSocket.writeString(MessageType.GET_DATANODE_LOCATIONS_REQUEST.name());
-		nameNodeSocket.writeString(rdfsFilename);
-		nameNodeSocket.flush();
-		BlockReplicasLocation[] blockReplicasLocations = (BlockReplicasLocation[]) nameNodeSocket.readObject();
-		nameNodeSocket.close();
+		requestBlockLocations();
+		BlockReplicasLocation[] blockReplicasLocations = readBlockLocations(nameNodeSocket);
+		return blockReplicasLocations;
+	}
+
+	private void requestBlockLocations() throws IOException {
+		ObjectOutputStream outputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
+		outputStream.writeUTF(MessageType.GET_DATANODE_LOCATIONS_REQUEST.name());
+		outputStream.writeUTF(rdfsFilename);
+		outputStream.flush();
+	}
+
+	private BlockReplicasLocation[] readBlockLocations(Socket nameNodeSocket)
+			throws IOException, ClassNotFoundException {
+		ObjectInputStream inputStream = new ObjectInputStream(nameNodeSocket.getInputStream());
+		BlockReplicasLocation[] blockReplicasLocations = (BlockReplicasLocation[]) inputStream.readObject();
 		return blockReplicasLocations;
 	}
 
@@ -62,7 +82,7 @@ public class Delete implements Runnable {
 	}
 
 	private void addDataNodeLocations(HashSet<NodeLocation> dataNodeLocations, BlockReplicasLocation blockLocation) {
-		for (NodeLocation dataNodeLocation : blockLocation.getDataNodeLocations()) {
+		for (NodeLocation dataNodeLocation : blockLocation.dataNodeLocations) {
 			dataNodeLocations.add(dataNodeLocation);
 		}
 	}
@@ -74,10 +94,19 @@ public class Delete implements Runnable {
 	}
 
 	private void deleteBlocksInSingleDataNode(NodeLocation dataNodeLocation) throws IOException {
-		SocketIOUtil dataNodeSocket = new SocketIOUtil(dataNodeLocation);
-		dataNodeSocket.writeString(MessageType.DELETE_BLOCK_REQUEST.name());
-		dataNodeSocket.writeString(rdfsFilename);
-		dataNodeSocket.flush();
+		Socket dataNodeSocket = new Socket(dataNodeLocation.address, dataNodeLocation.port);
+		sendDeleteRequest(dataNodeSocket);
 		dataNodeSocket.close();
+	}
+
+	private void sendDeleteRequest(Socket dataNodeSocket) throws IOException {
+		ObjectOutputStream outputStream = new ObjectOutputStream(dataNodeSocket.getOutputStream());
+		outputStream.writeUTF(MessageType.DELETE_BLOCK_REQUEST.name());
+		outputStream.writeUTF(rdfsFilename);
+		outputStream.flush();
+	}
+
+	void cleanUp() throws IOException {
+		nameNodeSocket.close();
 	}
 }

@@ -3,11 +3,12 @@ package com.rdfs.commands;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
 import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
-import com.rdfs.SocketIOUtil;
 import com.rdfs.messages.MessageType;
 import com.rdfs.messages.WriteBlockRequest;
 
@@ -30,8 +31,8 @@ public class Write implements Runnable {
 	private int nameNodePort = Constants.DEFAULT_NAME_NODE_PORT;
 
 	private File file;
-	private SocketIOUtil nameNodeSocket;
 	private FileInputStream fileInputStream;
+	private Socket nameNodeSocket;
 
 	@Override
 	public void run() {
@@ -45,13 +46,13 @@ public class Write implements Runnable {
 		}
 	}
 
-	private void init() throws UnknownHostException, IOException {
-		file = new File(filename);
-		nameNodeSocket = new SocketIOUtil(new NodeLocation(nameNodeAddress, nameNodePort));
+	private void init() throws IOException {
 		fileInputStream = new FileInputStream(file.toPath().toString());
+		nameNodeSocket = new Socket(nameNodeAddress, nameNodePort);
+		file = new File(filename);
 	}
 
-	private void sendAllCompleteBlocks() throws IOException, ClassNotFoundException, UnknownHostException {
+	private void sendAllCompleteBlocks() throws IOException, ClassNotFoundException {
 		long numOfCompleteBlocks = calcNumOfCompleteBlocks();
 		for (long blockNumber = 1; blockNumber <= numOfCompleteBlocks; ++blockNumber) {
 			getLocationAndSendBlock(blockNumber);
@@ -67,27 +68,51 @@ public class Write implements Runnable {
 	private void getLocationAndSendBlock(long blockNumber)
 			throws IOException, ClassNotFoundException {
 		NodeLocation[] dataNodeLocations = getDataNodeLocations();
-		byte[] block = getBlock(Constants.BLOCK_LENGTH);
+		byte[] block = readBlock(Constants.BLOCK_LENGTH);
 		sendBlock(block, blockNumber, dataNodeLocations);
 	}
 
-	private byte[] getBlock(long blockLength) throws IOException {
+	private NodeLocation[] getDataNodeLocations()
+			throws IOException, ClassNotFoundException {
+		requestDataNodeLocations();
+		NodeLocation[] dataNodeLocations = readDataNodeLocations();
+		return dataNodeLocations;
+	}
+
+	private void requestDataNodeLocations() throws IOException {
+		ObjectOutputStream outputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
+		outputStream.writeUTF(MessageType.GET_NEW_DATANODE_LOCATIONS_REQUEST.name());
+		outputStream.flush();
+	}
+
+	private NodeLocation[] readDataNodeLocations() throws IOException, ClassNotFoundException {
+		ObjectInputStream inputStream = new ObjectInputStream(nameNodeSocket.getInputStream());
+		NodeLocation dataNodeLocations[] = (NodeLocation[]) inputStream.readObject();
+		return dataNodeLocations;
+	}
+
+	private byte[] readBlock(long blockLength) throws IOException {
 		byte block[] = new byte[(int) blockLength];
 		fileInputStream.read(block);
 		return block;
 	}
 
 	private void sendBlock(byte block[], long blockNumber, NodeLocation[] dataNodeLocations) throws IOException {
-		NodeLocation firstDataNodeLocation = dataNodeLocations[0];
-		SocketIOUtil dataNodeSocket = new SocketIOUtil(firstDataNodeLocation);
-		dataNodeSocket.writeString(MessageType.WRITE_BLOCK_REQUEST.name());
-		dataNodeSocket.writeObject(new WriteBlockRequest(block, dataNodeLocations, rdfsFilename, blockNumber));
-		dataNodeSocket.flush();
+		NodeLocation firstLocation = dataNodeLocations[0];
+		Socket dataNodeSocket = new Socket(firstLocation.address, firstLocation.port);
+		writeBlock(block, blockNumber, dataNodeLocations, dataNodeSocket);
 		dataNodeSocket.close();
 	}
 
+	private void writeBlock(byte[] block, long blockNumber, NodeLocation[] dataNodeLocations, Socket dataNodeSocket)
+			throws IOException {
+		ObjectOutputStream outputStream = new ObjectOutputStream(dataNodeSocket.getOutputStream());
+		outputStream.writeUTF(MessageType.WRITE_BLOCK_REQUEST.name());
+		outputStream.writeObject(new WriteBlockRequest(block, dataNodeLocations, rdfsFilename, blockNumber));
+		outputStream.flush();
+	}
 
-	private void sendExtraBlockIfRemaining() throws IOException, ClassNotFoundException, UnknownHostException {
+	private void sendExtraBlockIfRemaining() throws IOException, ClassNotFoundException {
 		long fileLength = file.length();
 		boolean extraBlockIsRemaining = fileLength % Constants.BLOCK_LENGTH != 0;
 		if (extraBlockIsRemaining) {
@@ -101,16 +126,8 @@ public class Write implements Runnable {
 		long extraBlockLength = fileLength - Constants.BLOCK_LENGTH * numOfCompleteBlocks;
 		long extraBlockNumber = numOfCompleteBlocks + 1;
 		NodeLocation[] dataNodeLocations = getDataNodeLocations();
-		byte[] block = getBlock(extraBlockLength);
+		byte[] block = readBlock(extraBlockLength);
 		sendBlock(block, extraBlockNumber, dataNodeLocations);
-	}
-
-	private NodeLocation[] getDataNodeLocations()
-			throws IOException, ClassNotFoundException {
-		nameNodeSocket.writeString(MessageType.GET_NEW_DATANODE_LOCATIONS_REQUEST.name());
-		nameNodeSocket.flush();
-		NodeLocation dataNodeLocations[] = (NodeLocation[]) nameNodeSocket.readObject();
-		return dataNodeLocations;
 	}
 
 	private void cleanUp() throws IOException {
