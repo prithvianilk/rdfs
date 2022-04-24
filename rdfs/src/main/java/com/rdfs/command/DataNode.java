@@ -1,4 +1,4 @@
-package com.rdfs.commands;
+package com.rdfs.command;
 
 import picocli.CommandLine.Command;
 

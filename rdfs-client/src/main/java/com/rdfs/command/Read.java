@@ -1,4 +1,4 @@
-package com.rdfs.commands;
+package com.rdfs.command;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,8 +8,8 @@ import java.net.Socket;
 
 import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
-import com.rdfs.messages.MessageType;
-import com.rdfs.messages.ReadBlockRequest;
+import com.rdfs.message.MessageType;
+import com.rdfs.message.ReadBlockRequest;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;

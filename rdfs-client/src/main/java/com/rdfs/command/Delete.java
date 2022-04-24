@@ -1,4 +1,4 @@
-package com.rdfs.commands;
+package com.rdfs.command;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,7 +10,7 @@ import java.util.HashSet;
 import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
-import com.rdfs.messages.MessageType;
+import com.rdfs.message.MessageType;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;

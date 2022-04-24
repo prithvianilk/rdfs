@@ -1,4 +1,4 @@
-package com.rdfs.messages;
+package com.rdfs.message;
 
 public enum MessageType {
 	GET_NEW_DATANODE_LOCATIONS_REQUEST, 

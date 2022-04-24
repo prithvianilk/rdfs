@@ -1,4 +1,4 @@
-package com.rdfs.messages;
+package com.rdfs.message;
 
 import com.rdfs.NodeLocation;
 

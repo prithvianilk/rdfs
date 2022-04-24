@@ -1,7 +1,7 @@
 package com.rdfs;
 
-import com.rdfs.commands.NameNode;
-import com.rdfs.commands.DataNode;
+import com.rdfs.command.NameNode;
+import com.rdfs.command.DataNode;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
