@@ -1,15 +1,21 @@
 package com.rdfs;
 
 public class Constants {
-	public static final long BLOCK_LENGTH;
+	public static final long DEFAULT_BLOCK_LENGTH;
 	public static final String DEFAULT_NAME_NODE_ADDRESS;
 	public static final int DEFAULT_NAME_NODE_PORT;
 	public static final int DEFAULT_HEARTBEAT_PORT;
+	public static final int DEFAULT_HEARTBEAT_THREAD_SLEEP_DURATION;
+	public static final int DEFAULT_HEARTBEAT_THRESHOLD;
+	public static final int DEFAULT_REPLICATION_FACTOR;
 
 	static {
-		BLOCK_LENGTH = (long) 128e6;
+		DEFAULT_BLOCK_LENGTH = (long) 128e6;
 		DEFAULT_NAME_NODE_ADDRESS = "0.0.0.0";
 		DEFAULT_NAME_NODE_PORT = 3530;
 		DEFAULT_HEARTBEAT_PORT = 3630;
+		DEFAULT_HEARTBEAT_THRESHOLD = 1000;
+		DEFAULT_HEARTBEAT_THREAD_SLEEP_DURATION = 3000;
+		DEFAULT_REPLICATION_FACTOR = 2;
 	}
 }

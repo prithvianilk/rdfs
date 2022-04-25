@@ -61,14 +61,14 @@ public class Write implements Runnable {
 
 	private long calcNumOfCompleteBlocks() {
 		long fileLength = file.length();
-		long numOfCompleteBlocks = fileLength / Constants.BLOCK_LENGTH;
+		long numOfCompleteBlocks = fileLength / Constants.DEFAULT_BLOCK_LENGTH;
 		return numOfCompleteBlocks;
 	}
 
 	private void getLocationAndSendBlock(long blockNumber)
 			throws IOException, ClassNotFoundException {
 		NodeLocation[] dataNodeLocations = getDataNodeLocations();
-		byte[] block = readBlock(Constants.BLOCK_LENGTH);
+		byte[] block = readBlock(Constants.DEFAULT_BLOCK_LENGTH);
 		sendBlock(block, blockNumber, dataNodeLocations);
 	}
 
@@ -114,7 +114,7 @@ public class Write implements Runnable {
 
 	private void sendExtraBlockIfRemaining() throws IOException, ClassNotFoundException {
 		long fileLength = file.length();
-		boolean extraBlockIsRemaining = fileLength % Constants.BLOCK_LENGTH != 0;
+		boolean extraBlockIsRemaining = fileLength % Constants.DEFAULT_BLOCK_LENGTH != 0;
 		if (extraBlockIsRemaining) {
 			sendExtraBlock(fileLength);
 		}
@@ -123,7 +123,7 @@ public class Write implements Runnable {
 	private void sendExtraBlock(long fileLength)
 			throws IOException, ClassNotFoundException {
 		long numOfCompleteBlocks = calcNumOfCompleteBlocks();
-		long extraBlockLength = fileLength - Constants.BLOCK_LENGTH * numOfCompleteBlocks;
+		long extraBlockLength = fileLength - Constants.DEFAULT_BLOCK_LENGTH * numOfCompleteBlocks;
 		long extraBlockNumber = numOfCompleteBlocks + 1;
 		NodeLocation[] dataNodeLocations = getDataNodeLocations();
 		byte[] block = readBlock(extraBlockLength);

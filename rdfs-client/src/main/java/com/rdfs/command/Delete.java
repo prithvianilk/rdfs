@@ -61,7 +61,7 @@ public class Delete implements Runnable {
 
 	private void requestBlockLocations() throws IOException {
 		ObjectOutputStream outputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
-		outputStream.writeUTF(MessageType.GET_DATANODE_LOCATIONS_REQUEST.name());
+		outputStream.writeUTF(MessageType.GET_BLOCK_LOCATIONS_REQUEST.name());
 		outputStream.writeUTF(rdfsFilename);
 		outputStream.flush();
 	}

@@ -57,7 +57,7 @@ public class Read implements Runnable {
 
 	private void requestDataNodeLocations() throws IOException {
 		ObjectOutputStream nameNodeOutputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
-		nameNodeOutputStream.writeUTF(MessageType.GET_FILE_LOCATION_REQUEST.name());
+		nameNodeOutputStream.writeUTF(MessageType.GET_DATANODE_LOCATIONS_REQUEST.name());
 		nameNodeOutputStream.flush();
 	}
 

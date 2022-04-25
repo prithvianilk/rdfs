@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import com.rdfs.namenode.DataNodeHeartbeatStore;
+import com.rdfs.NodeLocation;
+
 public class HeartbeatHandler extends Handler {
     @Override
     public void run() {
-        try {
-            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            inputStream.readUTF();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        var address = socket.getInetAddress().toString();
+        var port = socket.getPort();
+        var heartbeatStore = DataNodeHeartbeatStore.getDataNodeHeartBeatStore();
+        heartbeatStore.updateHeartbeat(new NodeLocation(address, port));
     }
 }
