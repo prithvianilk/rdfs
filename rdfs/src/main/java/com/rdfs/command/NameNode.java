@@ -2,6 +2,7 @@ package com.rdfs.command;
 
 import com.rdfs.namenode.ServerWorker;
 import com.rdfs.namenode.handler.HandlerType;
+import com.rdfs.namenode.handler.HeartbeatTimeHandler;
 import com.rdfs.Constants;
 
 import picocli.CommandLine.Command;
@@ -22,10 +23,13 @@ public class NameNode implements Runnable {
 			var nameNodeWorker = new ServerWorker(nameNodePort, HandlerType.CLIENT);
 			var heartbeatThread = new Thread(heartbeatWorker);
 			var nameNodeThread = new Thread(nameNodeWorker);
+			var heartbeatTimeThread = new Thread(new HeartbeatTimeHandler());
 			heartbeatThread.start();
 			nameNodeThread.start();
+			heartbeatTimeThread.start();
 			heartbeatThread.join();
 			nameNodeThread.join();
+			heartbeatTimeThread.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

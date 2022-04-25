@@ -7,7 +7,7 @@ import com.rdfs.Constants;
 import com.rdfs.namenode.DataNodeHeartbeatStore;
 import com.rdfs.NodeLocation;
 
-public class HeartbeatTimeHandler extends Handler {
+public class HeartbeatTimeHandler implements Runnable {
     @Override
     public void run() {
         try {
