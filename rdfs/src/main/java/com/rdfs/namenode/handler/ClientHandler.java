@@ -20,12 +20,14 @@ public class ClientHandler extends Handler {
         var fileName = inputStream.readUTF();
         var dataNodeLocations = dataNodeLocationStore.addBlockNodeLocations(fileName);
         outputStream.writeObject(dataNodeLocations);
+        outputStream.flush();
     }
 
     private void getDataNodeLocations() throws IOException {
         var fileName = inputStream.readUTF();
         var dataNodeLocations = dataNodeLocationStore.getDataNodeLocations(fileName);
         outputStream.writeObject(dataNodeLocations);
+        outputStream.flush();
     }
 
     private void getBlockLocations() throws IOException {
@@ -33,6 +35,7 @@ public class ClientHandler extends Handler {
         var blockLocations = dataNodeLocationStore.getBlockLocations(fileName);
         dataNodeLocationStore.deleteFileMetaData(fileName);
         outputStream.writeObject(blockLocations);
+        outputStream.flush();
     }
 
     @Override

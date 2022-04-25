@@ -1,6 +1,8 @@
 package com.rdfs.message;
 
-public class ReadBlockRequest {
+import java.io.Serializable;
+
+public class ReadBlockRequest implements Serializable {
 	public String filename;
 	public long blockNumber;
 

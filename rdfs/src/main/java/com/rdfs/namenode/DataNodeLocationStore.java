@@ -3,20 +3,16 @@ package com.rdfs.namenode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.Arrays;
 
 import com.rdfs.NodeLocation;
+import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
-
-
-// should map all file names to datanodes containing blocks
-// should be able to query for all available datanodes
 
 public class DataNodeLocationStore {
     private static DataNodeLocationStore store = null;
     private ArrayList<NodeLocation> dataNodes;
-    private HashMap<String, ArrayList<ArrayList<NodeLocation>>> fileNameBlockLocationMap; 
-    // filename -> list of blocks
-    // blocks -> list of locations
+    private HashMap<String, ArrayList<NodeLocation[]>> fileNameBlockLocationMap; 
 
     private DataNodeLocationStore() {
         dataNodes = new ArrayList<NodeLocation>();
@@ -30,35 +26,39 @@ public class DataNodeLocationStore {
         return store;
     }
 
-    public ArrayList<NodeLocation> getDataNodeLocations(String fileName) {
-        var blockLocations = fileNameBlockLocationMap.get(fileName);
+    public NodeLocation[] getDataNodeLocations(String fileName) {
+        ArrayList<NodeLocation[]> blockLocations = fileNameBlockLocationMap.get(fileName);
         int numberOfBlocks = blockLocations.size();
-        var nodeLocations = new ArrayList<NodeLocation>();
-        for (var replicaNodeLocations: blockLocations) {
-            var firstLocation = replicaNodeLocations.get(0);
-            nodeLocations.add(firstLocation);
+        NodeLocation[] nodeLocations = new NodeLocation[numberOfBlocks];
+        for (int i = 0; i < numberOfBlocks; ++i) {
+            NodeLocation[] replicaNodeLocations = blockLocations.get(i);
+            var firstLocation = replicaNodeLocations[0];
+            nodeLocations[i] = firstLocation;
         }
         return nodeLocations;
     }
 
-    public ArrayList<NodeLocation> addBlockNodeLocations(String fileName) {
+    public NodeLocation[] addBlockNodeLocations(String fileName) {
         var newDataNodeLocations = selectNewBlockLocations(fileName);
         var blockLocations = fileNameBlockLocationMap.get(fileName);
+        if (blockLocations == null) {
+            blockLocations = new ArrayList<NodeLocation[]>();
+            fileNameBlockLocationMap.put(fileName, blockLocations);
+        }
         blockLocations.add(newDataNodeLocations);
         return newDataNodeLocations;
     }
 
-    // select random datanode locations for a file (specifically for a block)
-    private ArrayList<NodeLocation> selectNewBlockLocations(String fileName) {
+    private NodeLocation[] selectNewBlockLocations(String fileName) {
         //TODO get this from option
         int replicationFactor = Constants.DEFAULT_REPLICATION_FACTOR;
-        var randomLocations = new ArrayList<NodeLocation>(replicationFactor);
+        var randomLocations = new NodeLocation[replicationFactor];
         int numberOfDataNodes = dataNodes.size();
         Random random = new Random();
         for (int i = 0; i < replicationFactor; ++i) {
             int randomIndex = random.nextInt(numberOfDataNodes);
-            NodeLocation randomNodeLocation = dataNodes.get(randomIndex);
-            randomLocations.add(randomNodeLocation);
+            var randomNodeLocation = dataNodes.get(randomIndex);
+            randomLocations[i] = (randomNodeLocation);
         }
         return randomLocations;
     }
@@ -67,7 +67,16 @@ public class DataNodeLocationStore {
         fileNameBlockLocationMap.remove(fileName);
     }
 
-    public ArrayList<ArrayList<NodeLocation>> getBlockLocations(String fileName) {
-        return fileNameBlockLocationMap.get(fileName);
+    public BlockReplicasLocation[] getBlockLocations(String fileName) {
+        ArrayList<NodeLocation[]> blockLocationsArrayList = fileNameBlockLocationMap.get(fileName);
+        int numberOfBlocks = blockLocationsArrayList.size();
+        BlockReplicasLocation[] blockReplicasLocations = new BlockReplicasLocation[numberOfBlocks];
+        for (int i = 0; i < numberOfBlocks; ++i) {
+            NodeLocation[] dataNodeLocations = blockLocationsArrayList.get(i);
+            BlockReplicasLocation blockReplicasLocation = new BlockReplicasLocation();
+            blockReplicasLocation.dataNodeLocations = dataNodeLocations;
+            blockReplicasLocations[i] = blockReplicasLocation;
+        }
+        return blockReplicasLocations;
     }
 }

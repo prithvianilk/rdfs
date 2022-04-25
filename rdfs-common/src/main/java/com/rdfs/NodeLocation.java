@@ -1,6 +1,9 @@
 package com.rdfs;
 
-public class NodeLocation {
+import java.io.Serializable;
+
+public class NodeLocation implements Serializable {
+
 	public String address;
 	public int port;
 

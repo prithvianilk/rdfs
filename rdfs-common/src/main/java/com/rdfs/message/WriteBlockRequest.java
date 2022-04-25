@@ -1,8 +1,10 @@
 package com.rdfs.message;
 
+import java.io.Serializable;
+
 import com.rdfs.NodeLocation;
 
-public class WriteBlockRequest {
+public class WriteBlockRequest implements Serializable {
 	public NodeLocation dataNodeLocations[];
 	public byte block[];
 	public String filename;
