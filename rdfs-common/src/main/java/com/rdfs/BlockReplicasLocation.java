@@ -1,5 +1,7 @@
 package com.rdfs;
 
-public class BlockReplicasLocation {
+import java.io.Serializable;
+
+public class BlockReplicasLocation implements Serializable {
 	public NodeLocation[] dataNodeLocations;
 }
