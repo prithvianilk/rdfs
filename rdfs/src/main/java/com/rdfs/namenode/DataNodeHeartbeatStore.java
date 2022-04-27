@@ -5,7 +5,7 @@ import com.rdfs.NodeLocation;
 
 public class DataNodeHeartbeatStore {
     private static DataNodeHeartbeatStore store = null;
-    public HashMap<Integer, Long> lastHeartbeatMap;
+    public HashMap<String, Long> lastHeartbeatMap;
 
     private DataNodeHeartbeatStore() {
         lastHeartbeatMap = new HashMap<>();
@@ -18,9 +18,8 @@ public class DataNodeHeartbeatStore {
         return store;
     }
 
-    public void updateHeartbeat(int id) {
+    public void updateHeartbeat(NodeLocation dataNodeLocation) {
         long currentTime = System.currentTimeMillis();  
-        lastHeartbeatMap.put(id, currentTime);
-        System.out.println(lastHeartbeatMap);
+        lastHeartbeatMap.put(dataNodeLocation.toString(), currentTime);
     }
 }

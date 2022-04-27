@@ -11,10 +11,11 @@ public class HeartbeatHandler extends Handler {
     public void run() {
         try {
             ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-            int id = inputStream.readInt();
+            NodeLocation dataNodeLocation = (NodeLocation) inputStream.readObject();
             var heartbeatStore = DataNodeHeartbeatStore.getDataNodeHeartBeatStore();
-            heartbeatStore.updateHeartbeat(id);
-        } catch (IOException e) {
+            System.out.println("Data Node " + dataNodeLocation + " sent a heartbeat.");
+            heartbeatStore.updateHeartbeat(dataNodeLocation);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

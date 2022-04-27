@@ -13,8 +13,9 @@ public class HeartbeatTimeHandler implements Runnable {
         try {
             //TODO prevent race condition
             //TODO make itearble or get iterator and access
-            HashMap<Integer, Long> dataNodeLastHeartBeatMap = DataNodeHeartbeatStore.getDataNodeHeartBeatStore().lastHeartbeatMap;
+            HashMap<String, Long> dataNodeLastHeartBeatMap = DataNodeHeartbeatStore.getDataNodeHeartBeatStore().lastHeartbeatMap;
             while (true) {
+                // System.out.println(dataNodeLastHeartBeatMap);
                 for (var mapEntry: dataNodeLastHeartBeatMap.entrySet()) {
                     var currentTime = System.currentTimeMillis();  
                     var lastHeartbeatTime = (long) mapEntry.getValue();
