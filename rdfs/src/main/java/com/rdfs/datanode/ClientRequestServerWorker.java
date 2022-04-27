@@ -7,9 +7,11 @@ import java.io.IOException;
 public class ClientRequestServerWorker implements Runnable
 {
     private int dataNodePort;
+    private String dataPath;
 
-    public ClientRequestServerWorker(int dataNodePort) {
+    public ClientRequestServerWorker(int dataNodePort, String dataPath) {
         this.dataNodePort = dataNodePort;
+        this.dataPath = dataPath;
     }
 
     @Override
@@ -18,7 +20,7 @@ public class ClientRequestServerWorker implements Runnable
             ServerSocket socketServer = new ServerSocket(dataNodePort);
             while (true) {
                 Socket clientSocket = socketServer.accept();
-                Thread clientRequestThread = new Thread(new ClientRequestHandler(clientSocket));
+                Thread clientRequestThread = new Thread(new ClientRequestHandler(clientSocket, dataPath));
                 clientRequestThread.start();
             }
         }

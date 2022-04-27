@@ -19,12 +19,14 @@ public class ClientRequestHandler implements Runnable
 {
     private Socket socket;
     private ObjectInputStream inputStream;
+    private String dataPath;
 
-    public ClientRequestHandler(Socket socket) 
+    public ClientRequestHandler(Socket socket, String dataPath) 
     {
         try {
             this.socket = socket;
             this.inputStream = new ObjectInputStream(socket.getInputStream());
+            this.dataPath = dataPath;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,7 +34,7 @@ public class ClientRequestHandler implements Runnable
 
     private void writeBlock() throws Exception {
         WriteBlockRequest blockRequest = (WriteBlockRequest) inputStream.readObject();
-        String fileDirPath = String.format("%s/", blockRequest.filename);
+        String fileDirPath = String.format("%s/%s/", dataPath, blockRequest.filename);
         File fileDir = new File(fileDirPath);
         fileDir.mkdirs();
         String blockFilePath = String.format("%s/%s", fileDirPath, String.valueOf(blockRequest.blockNumber));
@@ -53,7 +55,8 @@ public class ClientRequestHandler implements Runnable
 
     private void readBlock() throws Exception {
         ReadBlockRequest blockRequest = (ReadBlockRequest) inputStream.readObject();
-        String blockFilePath = String.format("%s/%s", blockRequest.filename, String.valueOf(blockRequest.blockNumber));
+        String fileDirPath = String.format("%s/%s/", dataPath, blockRequest.filename);
+        String blockFilePath = String.format("%s/%s", fileDirPath, String.valueOf(blockRequest.blockNumber));
         File file = new File(blockFilePath);
         long blockLength = file.length();
         FileInputStream fileInputStream = new FileInputStream(blockFilePath);
@@ -66,8 +69,8 @@ public class ClientRequestHandler implements Runnable
 
     private void deleteBlock() throws Exception {
         String filename = inputStream.readUTF();
-        String rdfsFilePath = String.format("%s/", filename);
-        File file = new File(rdfsFilePath);
+        String fileDirPath = String.format("%s/%s/", dataPath, filename);
+        File file = new File(fileDirPath);
         for (File blockFile : file.listFiles()) {
             blockFile.delete();
         }

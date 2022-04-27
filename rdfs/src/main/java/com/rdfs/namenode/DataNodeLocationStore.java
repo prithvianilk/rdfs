@@ -48,7 +48,7 @@ public class DataNodeLocationStore {
     }
 
     public NodeLocation[] addBlockNodeLocations(String fileName) {
-        var newDataNodeLocations = selectNewBlockLocations(fileName);
+        var newDataNodeLocations = selectNewBlockLocations();
         var blockLocations = fileNameBlockLocationMap.get(fileName);
         if (blockLocations == null) {
             blockLocations = new ArrayList<NodeLocation[]>();
@@ -58,16 +58,24 @@ public class DataNodeLocationStore {
         return newDataNodeLocations;
     }
 
-    private NodeLocation[] selectNewBlockLocations(String fileName) {
+    private NodeLocation[] selectNewBlockLocations() {
         //TODO get this from option
         int replicationFactor = Constants.DEFAULT_REPLICATION_FACTOR;
         var randomLocations = new NodeLocation[replicationFactor];
-        int numberOfDataNodes = dataNodes.size();
+        System.out.println(dataNodes.size());
+        ArrayList<NodeLocation> dataNodesCopy = new ArrayList<>();
+        for (NodeLocation nodeLocation: dataNodes) {
+            dataNodesCopy.add(nodeLocation.clone());
+        }
+        System.out.println(dataNodesCopy);
         Random random = new Random();
         for (int i = 0; i < replicationFactor; ++i) {
+            int numberOfDataNodes = dataNodesCopy.size();
             int randomIndex = random.nextInt(numberOfDataNodes);
-            var randomNodeLocation = dataNodes.get(randomIndex);
-            randomLocations[i] = (randomNodeLocation);
+            var randomNodeLocation = dataNodesCopy.get(randomIndex);
+            randomLocations[i] = randomNodeLocation;
+            dataNodesCopy.remove(randomNodeLocation);
+            System.out.println("Choice: " + randomNodeLocation.toString());
         }
         return randomLocations;
     }

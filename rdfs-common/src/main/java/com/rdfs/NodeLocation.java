@@ -21,6 +21,10 @@ public class NodeLocation implements Serializable {
 		if (nodeLocation == null) {
 			return false;
 		}
-		return nodeLocation.address == address && nodeLocation.port == port;
+		return nodeLocation.toString().equals(this.toString());
+	}
+
+	public NodeLocation clone() {
+		return new NodeLocation(address, port);
 	}
 }

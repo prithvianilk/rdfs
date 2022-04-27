@@ -1,0 +1,15 @@
+FROM maven:3.8.4-jdk-11 AS build  
+
+COPY rdfs/src /usr/src/app/rdfs/src  
+COPY rdfs/pom.xml /usr/src/app/rdfs
+COPY rdfs-common/src /usr/src/app/rdfs-common/src  
+COPY rdfs-common/pom.xml /usr/src/app/rdfs-common
+
+RUN mvn -f /usr/src/app/rdfs/pom.xml clean package
+RUN mvn -f /usr/src/app/rdfs-common/pom.xml clean package
+
+FROM gcr.io/distroless/java  
+COPY --from=build /usr/src/app/rdfs/target/rdfs-1.0-SNAPSHOT.jar /usr/app/rdfs/rdfs-1.0-SNAPSHOT.jar  
+COPY --from=build /usr/src/app/rdfs-common/target/rdfs-common-1.0-SNAPSHOT.jar /usr/app/rdfs-common/rdfs-common-1.0-SNAPSHOT.jar  
+COPY rdfs/lib/picocli-4.6.3.jar usr/app/rdfs/picocli-4.6.3.jar
+ENTRYPOINT ["java", "-cp", "usr/app/rdfs/picocli-4.6.3.jar:rdfs-common/target/rdfs-common-1.0-SNAPSHOT.jar:usr/app/rdfs/rdfs-1.0-SNAPSHOT.jar", "com.rdfs.Rdfs"]
