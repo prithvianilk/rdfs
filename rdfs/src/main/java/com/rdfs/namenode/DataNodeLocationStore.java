@@ -26,6 +26,15 @@ public class DataNodeLocationStore {
         return store;
     }
 
+    public void addDataNode(NodeLocation nodeLocation) {
+        for (NodeLocation currentNodeLocation: dataNodes) {
+            if (nodeLocation.equals(currentNodeLocation)) {
+                return ;
+            }
+        }
+        dataNodes.add(nodeLocation);
+    }
+
     public NodeLocation[] getDataNodeLocations(String fileName) {
         ArrayList<NodeLocation[]> blockLocations = fileNameBlockLocationMap.get(fileName);
         int numberOfBlocks = blockLocations.size();

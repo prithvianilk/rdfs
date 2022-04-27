@@ -25,7 +25,7 @@ public class DataNode implements Runnable {
     @Override 
 	public void run() {
         try {
-            String currentIpAddress = InetAddress.getLocalHost().toString();
+            String currentIpAddress = InetAddress.getLocalHost().getHostAddress().toString();
             Thread sendHeartBeatThread = new Thread(new HeartbeatRequestWorker(new NodeLocation(currentIpAddress, dataNodePort), nameNodeAddress, nameNodeHeartbeatPort));
             Thread clientThread = new Thread(new ClientRequestServerWorker(dataNodePort));
             sendHeartBeatThread.start();
