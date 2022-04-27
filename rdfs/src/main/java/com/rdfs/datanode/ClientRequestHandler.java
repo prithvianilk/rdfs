@@ -41,13 +41,13 @@ public class ClientRequestHandler implements Runnable
         FileOutputStream fileOutputStream = new FileOutputStream(blockFilePath);
         fileOutputStream.write(blockRequest.block);
         fileOutputStream.flush();
-        NodeLocation[] nextDataNodeLocations = Arrays.copyOfRange(blockRequest.dataNodeLocations, 1, blockRequest.dataNodeLocations.length - 1);
+        NodeLocation[] nextDataNodeLocations = Arrays.copyOfRange(blockRequest.dataNodeLocations, 1, blockRequest.dataNodeLocations.length);
         if (nextDataNodeLocations.length != 0) {
             NodeLocation nextDataNodeToSend = nextDataNodeLocations[0];
             Socket nextDataNodesocket = new Socket(nextDataNodeToSend.address, nextDataNodeToSend.port);
             ObjectOutputStream outputStream = new ObjectOutputStream(nextDataNodesocket.getOutputStream());
             WriteBlockRequest newBlockRequest = new WriteBlockRequest(blockRequest.block, nextDataNodeLocations, blockRequest.filename, blockRequest.blockNumber);
-            outputStream.writeObject(MessageType.WRITE_BLOCK_REQUEST.name());
+            outputStream.writeUTF(MessageType.WRITE_BLOCK_REQUEST.name());
             outputStream.writeObject(newBlockRequest);
             outputStream.flush();
         }

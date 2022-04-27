@@ -67,13 +67,12 @@ public class DataNodeLocationStore {
         for (NodeLocation nodeLocation: dataNodes) {
             dataNodesCopy.add(nodeLocation.clone());
         }
-        System.out.println(dataNodesCopy);
         Random random = new Random();
         for (int i = 0; i < replicationFactor; ++i) {
             int numberOfDataNodes = dataNodesCopy.size();
             int randomIndex = random.nextInt(numberOfDataNodes);
             var randomNodeLocation = dataNodesCopy.get(randomIndex);
-            randomLocations[i] = randomNodeLocation;
+            randomLocations[i] = randomNodeLocation.clone();
             dataNodesCopy.remove(randomNodeLocation);
             System.out.println("Choice: " + randomNodeLocation.toString());
         }
