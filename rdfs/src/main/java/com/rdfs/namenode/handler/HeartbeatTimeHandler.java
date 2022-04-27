@@ -13,13 +13,14 @@ public class HeartbeatTimeHandler implements Runnable {
         try {
             //TODO prevent race condition
             //TODO make itearble or get iterator and access
-            HashMap<NodeLocation, Long> dataNodeLastHeartBeatMap = DataNodeHeartbeatStore.getDataNodeHeartBeatStore().lastHeartbeatMap;
+            HashMap<Integer, Long> dataNodeLastHeartBeatMap = DataNodeHeartbeatStore.getDataNodeHeartBeatStore().lastHeartbeatMap;
             while (true) {
                 for (var mapEntry: dataNodeLastHeartBeatMap.entrySet()) {
                     var currentTime = System.currentTimeMillis();  
                     var lastHeartbeatTime = (long) mapEntry.getValue();
                     if (currentTime - lastHeartbeatTime > Constants.DEFAULT_HEARTBEAT_THRESHOLD) {
                         //TODO mark node as unavailable
+                        System.out.println("Data Node " + mapEntry.getKey() + " is unavailable.");
                     }
                 }
                 Thread.sleep(Constants.DEFAULT_HEARTBEAT_THREAD_SLEEP_DURATION);
