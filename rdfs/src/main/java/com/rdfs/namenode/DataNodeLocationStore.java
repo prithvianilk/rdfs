@@ -5,18 +5,23 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Arrays;
 
+import org.redisson.api.RedissonClient;
+import org.redisson.api.RMap;
+import org.redisson.api.RList;
+
 import com.rdfs.NodeLocation;
 import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
 
 public class DataNodeLocationStore {
     private static DataNodeLocationStore store = null;
-    private ArrayList<NodeLocation> dataNodes;
-    private HashMap<String, ArrayList<NodeLocation[]>> fileNameBlockLocationMap; 
+    private RList<NodeLocation> dataNodes;
+    private RMap<String, ArrayList<NodeLocation[]>> fileNameBlockLocationMap; 
 
     private DataNodeLocationStore() {
-        dataNodes = new ArrayList<NodeLocation>();
-        fileNameBlockLocationMap = new HashMap<>();
+        RedissonClient redisClient = RedisSingleton.getRedis().getClient();
+        dataNodes = redisClient.getList("datanode-list");
+        fileNameBlockLocationMap = redisClient.getMap("file-location-map");
     }
 
     public static DataNodeLocationStore getDataNodeLocationStore() {
@@ -52,9 +57,9 @@ public class DataNodeLocationStore {
         var blockLocations = fileNameBlockLocationMap.get(fileName);
         if (blockLocations == null) {
             blockLocations = new ArrayList<NodeLocation[]>();
-            fileNameBlockLocationMap.put(fileName, blockLocations);
         }
         blockLocations.add(newDataNodeLocations);
+        fileNameBlockLocationMap.put(fileName, blockLocations);
         return newDataNodeLocations;
     }
 
@@ -62,7 +67,6 @@ public class DataNodeLocationStore {
         //TODO get this from option
         int replicationFactor = Constants.DEFAULT_REPLICATION_FACTOR;
         var randomLocations = new NodeLocation[replicationFactor];
-        System.out.println(dataNodes.size());
         ArrayList<NodeLocation> dataNodesCopy = new ArrayList<>();
         for (NodeLocation nodeLocation: dataNodes) {
             dataNodesCopy.add(nodeLocation.clone());

@@ -21,7 +21,7 @@ public class HeartbeatHandler extends Handler {
         try {
             ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
             NodeLocation dataNodeLocation = (NodeLocation) inputStream.readObject();
-            System.out.println("Data Node " + dataNodeLocation + " sent a heartbeat.");
+            System.out.println(String.format("Data Node %s sent a heartbeat.", dataNodeLocation));
             heartbeatStore.updateHeartbeat(dataNodeLocation);
             locationStore.addDataNode(dataNodeLocation);
         } catch (Exception e) {

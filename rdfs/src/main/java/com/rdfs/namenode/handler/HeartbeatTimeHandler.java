@@ -1,7 +1,8 @@
 package com.rdfs.namenode.handler;
 
 import java.util.HashMap;
-import java.util.Map;
+
+import org.redisson.api.RMap;
 
 import com.rdfs.Constants;
 import com.rdfs.namenode.DataNodeHeartbeatStore;
@@ -13,7 +14,7 @@ public class HeartbeatTimeHandler implements Runnable {
         try {
             //TODO prevent race condition
             //TODO make itearble or get iterator and access
-            HashMap<String, Long> dataNodeLastHeartBeatMap = DataNodeHeartbeatStore.getDataNodeHeartBeatStore().lastHeartbeatMap;
+            RMap<String, Long> dataNodeLastHeartBeatMap = DataNodeHeartbeatStore.getDataNodeHeartBeatStore().getHeartbeatMap();
             while (true) {
                 // System.out.println(dataNodeLastHeartBeatMap);
                 for (var mapEntry: dataNodeLastHeartBeatMap.entrySet()) {
