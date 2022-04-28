@@ -49,7 +49,6 @@ public class Write implements Runnable {
 	private void init() throws IOException {
 		file = new File(filename);
 		fileInputStream = new FileInputStream(file.toPath().toString());
-		nameNodeSocket = new Socket(nameNodeAddress, nameNodePort);
 		file = new File(filename);
 	}
 
@@ -81,6 +80,7 @@ public class Write implements Runnable {
 	}
 
 	private void requestDataNodeLocations() throws IOException {
+		nameNodeSocket = new Socket(nameNodeAddress, nameNodePort);
 		ObjectOutputStream outputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
 		outputStream.writeUTF(MessageType.GET_NEW_DATANODE_LOCATIONS_REQUEST.name());
 		outputStream.writeUTF(rdfsFilename);
