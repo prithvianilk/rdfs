@@ -1,7 +1,7 @@
 package com.rdfs;
 
 public class Constants {
-	public static final long DEFAULT_BLOCK_LENGTH;
+	public static final long DEFAULT_BLOCK_SIZE;
 	public static final String DEFAULT_NAME_NODE_ADDRESS;
 	public static final int DEFAULT_NAME_NODE_PORT;
 	public static final int DEFAULT_DATA_NODE_PORT;
@@ -11,7 +11,7 @@ public class Constants {
 	public static final int DEFAULT_REPLICATION_FACTOR;
 
 	static {
-		DEFAULT_BLOCK_LENGTH = (long) 128e6;
+		DEFAULT_BLOCK_SIZE = (long) 128e6;
 		DEFAULT_NAME_NODE_ADDRESS = "0.0.0.0";
 		DEFAULT_NAME_NODE_PORT = 3620;
 		DEFAULT_DATA_NODE_PORT = 3530;

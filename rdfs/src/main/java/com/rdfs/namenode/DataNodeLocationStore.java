@@ -2,6 +2,7 @@ package com.rdfs.namenode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Arrays;
 
@@ -10,7 +11,6 @@ import org.redisson.api.RMap;
 import org.redisson.api.RList;
 
 import com.rdfs.NodeLocation;
-import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
 
 public class DataNodeLocationStore {
@@ -46,7 +46,11 @@ public class DataNodeLocationStore {
         NodeLocation[] nodeLocations = new NodeLocation[numberOfBlocks];
         for (int i = 0; i < numberOfBlocks; ++i) {
             NodeLocation[] replicaNodeLocations = blockLocations.get(i);
-            var firstLocation = replicaNodeLocations[0];
+            // for (NodeLocation nodeLocation: replicaNodeLocations) {
+            //     System.out.println(nodeLocation.toString());
+            // }
+            // System.out.println();
+            NodeLocation firstLocation = replicaNodeLocations[0];
             nodeLocations[i] = firstLocation;
         }
         return nodeLocations;
@@ -87,16 +91,19 @@ public class DataNodeLocationStore {
         fileNameBlockLocationMap.remove(fileName);
     }
 
-    public BlockReplicasLocation[] getBlockLocations(String fileName) {
+    public NodeLocation[] getBlockLocations(String fileName) {
         ArrayList<NodeLocation[]> blockLocationsArrayList = fileNameBlockLocationMap.get(fileName);
         int numberOfBlocks = blockLocationsArrayList.size();
-        BlockReplicasLocation[] blockReplicasLocations = new BlockReplicasLocation[numberOfBlocks];
+        HashSet<NodeLocation> uniqueNodeLocations = new HashSet<NodeLocation>();
         for (int i = 0; i < numberOfBlocks; ++i) {
             NodeLocation[] dataNodeLocations = blockLocationsArrayList.get(i);
-            BlockReplicasLocation blockReplicasLocation = new BlockReplicasLocation();
-            blockReplicasLocation.dataNodeLocations = dataNodeLocations;
-            blockReplicasLocations[i] = blockReplicasLocation;
+            for (NodeLocation dataNodeLocation: dataNodeLocations) {
+                uniqueNodeLocations.add(dataNodeLocation);
+            }
         }
-        return blockReplicasLocations;
+        int numberOfDataNodes = uniqueNodeLocations.size();
+        NodeLocation[] dataNodeLocations = new NodeLocation[numberOfDataNodes];
+        uniqueNodeLocations.toArray(dataNodeLocations);
+        return dataNodeLocations;
     }
 }

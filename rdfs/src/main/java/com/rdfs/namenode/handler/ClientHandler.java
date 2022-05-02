@@ -5,9 +5,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import com.rdfs.message.MessageType;
+import com.rdfs.message.GetNewDataNodeLocationsRequest;
 import com.rdfs.namenode.DataNodeLocationStore;
 import com.rdfs.NodeLocation;
-import com.rdfs.BlockReplicasLocation;
 
 public class ClientHandler extends Handler {
     private DataNodeLocationStore dataNodeLocationStore;
@@ -18,9 +18,14 @@ public class ClientHandler extends Handler {
         dataNodeLocationStore = DataNodeLocationStore.getDataNodeLocationStore();
     }
 
-    private void getNewDataNodeLocations() throws IOException {
-        String fileName = inputStream.readUTF();
-        NodeLocation[] dataNodeLocations = dataNodeLocationStore.addBlockNodeLocations(fileName);
+    private void getNewDataNodeLocations() throws IOException, ClassNotFoundException {
+        GetNewDataNodeLocationsRequest getNewDataNodeLocationsRequest = (GetNewDataNodeLocationsRequest) inputStream.readObject();
+        String filename = getNewDataNodeLocationsRequest.filename;
+        boolean isNewWrite = getNewDataNodeLocationsRequest.isNewWrite;
+        if (isNewWrite) {
+            dataNodeLocationStore.deleteFileMetaData(filename);
+        }
+        NodeLocation[] dataNodeLocations = dataNodeLocationStore.addBlockNodeLocations(filename);
         outputStream.writeObject(dataNodeLocations);
         outputStream.flush();
     }
@@ -34,7 +39,7 @@ public class ClientHandler extends Handler {
 
     private void getBlockLocations() throws IOException {
         String fileName = inputStream.readUTF();
-        BlockReplicasLocation[] blockLocations = dataNodeLocationStore.getBlockLocations(fileName);
+        NodeLocation[] blockLocations = dataNodeLocationStore.getBlockLocations(fileName);
         dataNodeLocationStore.deleteFileMetaData(fileName);
         outputStream.writeObject(blockLocations);
         outputStream.flush();
@@ -59,7 +64,7 @@ public class ClientHandler extends Handler {
                 default:
                     break;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -14,6 +14,7 @@ import com.rdfs.NodeLocation;
 import com.rdfs.message.MessageType;
 import com.rdfs.message.WriteBlockRequest;
 import com.rdfs.message.ReadBlockRequest;
+import com.rdfs.message.DeleteBlockRequest;
 
 public class ClientRequestHandler implements Runnable
 {
@@ -33,20 +34,26 @@ public class ClientRequestHandler implements Runnable
     }
 
     private void writeBlock() throws Exception {
-        WriteBlockRequest blockRequest = (WriteBlockRequest) inputStream.readObject();
-        String fileDirPath = String.format("%s/%s/", dataPath, blockRequest.filename);
+        WriteBlockRequest writeBlockRequest = (WriteBlockRequest) inputStream.readObject();
+        NodeLocation[] dataNodeLocations = writeBlockRequest.dataNodeLocations;
+        long blockNumber = writeBlockRequest.blockNumber;
+        String filename = writeBlockRequest.filename;
+        byte[] blockContent = writeBlockRequest.block;
+        String fileDirPath = String.format("%s/%s/", dataPath, writeBlockRequest.filename);
         File fileDir = new File(fileDirPath);
         fileDir.mkdirs();
-        String blockFilePath = String.format("%s/%s", fileDirPath, String.valueOf(blockRequest.blockNumber));
+        String blockFilePath = String.format("%s/%s", fileDirPath, String.valueOf(blockNumber));
         FileOutputStream fileOutputStream = new FileOutputStream(blockFilePath);
-        fileOutputStream.write(blockRequest.block);
+        fileOutputStream.write(writeBlockRequest.block);
         fileOutputStream.flush();
-        NodeLocation[] nextDataNodeLocations = Arrays.copyOfRange(blockRequest.dataNodeLocations, 1, blockRequest.dataNodeLocations.length);
-        if (nextDataNodeLocations.length != 0) {
+        boolean isLastDataNode = dataNodeLocations.length == 1;
+        if (!isLastDataNode) {
+            NodeLocation[] nextDataNodeLocations = Arrays.copyOfRange(writeBlockRequest.dataNodeLocations, 1, writeBlockRequest.dataNodeLocations.length);
             NodeLocation nextDataNodeToSend = nextDataNodeLocations[0];
             Socket nextDataNodesocket = new Socket(nextDataNodeToSend.address, nextDataNodeToSend.port);
             ObjectOutputStream outputStream = new ObjectOutputStream(nextDataNodesocket.getOutputStream());
-            WriteBlockRequest newBlockRequest = new WriteBlockRequest(blockRequest.block, nextDataNodeLocations, blockRequest.filename, blockRequest.blockNumber);
+            writeBlockRequest.dataNodeLocations = nextDataNodeLocations;
+            WriteBlockRequest newBlockRequest = writeBlockRequest;
             outputStream.writeUTF(MessageType.WRITE_BLOCK_REQUEST.name());
             outputStream.writeObject(newBlockRequest);
             outputStream.flush();
@@ -54,9 +61,9 @@ public class ClientRequestHandler implements Runnable
     }
 
     private void readBlock() throws Exception {
-        ReadBlockRequest blockRequest = (ReadBlockRequest) inputStream.readObject();
-        String fileDirPath = String.format("%s/%s/", dataPath, blockRequest.filename);
-        String blockFilePath = String.format("%s/%s", fileDirPath, String.valueOf(blockRequest.blockNumber));
+        ReadBlockRequest readBlockRequest = (ReadBlockRequest) inputStream.readObject();
+        String fileDirPath = String.format("%s/%s/", dataPath, readBlockRequest.filename);
+        String blockFilePath = String.format("%s/%s", fileDirPath, String.valueOf(readBlockRequest.blockNumber));
         File file = new File(blockFilePath);
         long blockLength = file.length();
         FileInputStream fileInputStream = new FileInputStream(blockFilePath);
@@ -68,11 +75,25 @@ public class ClientRequestHandler implements Runnable
     }
 
     private void deleteBlock() throws Exception {
-        String filename = inputStream.readUTF();
+        DeleteBlockRequest deleteBlockRequest = (DeleteBlockRequest) inputStream.readObject();
+        String filename = deleteBlockRequest.filename;
+        NodeLocation[] dataNodeLocations = deleteBlockRequest.dataNodeLocations;
         String fileDirPath = String.format("%s/%s/", dataPath, filename);
         File file = new File(fileDirPath);
         for (File blockFile : file.listFiles()) {
             blockFile.delete();
+        }
+        boolean isLastDataNode = dataNodeLocations.length == 1;
+        if (!isLastDataNode) {
+            NodeLocation[] nextDataNodeLocations = Arrays.copyOfRange(dataNodeLocations, 1, dataNodeLocations.length);
+            NodeLocation nextDataNodeToSend = nextDataNodeLocations[0];
+            Socket nextDataNodesocket = new Socket(nextDataNodeToSend.address, nextDataNodeToSend.port);
+            ObjectOutputStream outputStream = new ObjectOutputStream(nextDataNodesocket.getOutputStream());
+            deleteBlockRequest.dataNodeLocations = nextDataNodeLocations;
+            DeleteBlockRequest newBlockRequest = deleteBlockRequest;
+            outputStream.writeUTF(MessageType.DELETE_BLOCK_REQUEST.name());
+            outputStream.writeObject(newBlockRequest);
+            outputStream.flush();
         }
     }
 

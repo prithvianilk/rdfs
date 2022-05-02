@@ -5,11 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.HashSet;
 
-import com.rdfs.BlockReplicasLocation;
 import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
+import com.rdfs.message.DeleteBlockRequest;
 import com.rdfs.message.MessageType;
 
 import picocli.CommandLine.Command;
@@ -33,7 +32,7 @@ public class Delete implements Runnable {
 	public void run() {
 		try {
 			init();
-			HashSet<NodeLocation> dataNodeLocations = getDataNodeLocations();
+			NodeLocation[] dataNodeLocations = getDataNodeLocations();
 			deleteBlocksInDataNodes(dataNodeLocations);
 			cleanUp();
 		} catch (Exception e) {
@@ -45,64 +44,38 @@ public class Delete implements Runnable {
 		nameNodeSocket = new Socket(nameNodeAddress, nameNodePort);
 	}
 
-	private HashSet<NodeLocation> getDataNodeLocations()
+	private NodeLocation[] getDataNodeLocations()
 			throws UnknownHostException, ClassNotFoundException, IOException {
-		BlockReplicasLocation[] blockReplicasLocations = getBlockReplicaLocations();
-		HashSet<NodeLocation> dataNodeLocations = groupBlockLocationsByDataNode(blockReplicasLocations);
+		requestDataNodeLocations();
+		NodeLocation[] dataNodeLocations = readDataNodeLocations(nameNodeSocket);
 		return dataNodeLocations;
 	}
 
-	private BlockReplicasLocation[] getBlockReplicaLocations()
-			throws UnknownHostException, IOException, ClassNotFoundException {
-		requestBlockLocations();
-		BlockReplicasLocation[] blockReplicasLocations = readBlockLocations(nameNodeSocket);
-		return blockReplicasLocations;
-	}
-
-	private void requestBlockLocations() throws IOException {
+	private void requestDataNodeLocations() throws IOException {
 		ObjectOutputStream outputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
 		outputStream.writeUTF(MessageType.GET_BLOCK_LOCATIONS_REQUEST.name());
 		outputStream.writeUTF(rdfsFilename);
 		outputStream.flush();
 	}
 
-	private BlockReplicasLocation[] readBlockLocations(Socket nameNodeSocket)
+	private NodeLocation[] readDataNodeLocations(Socket nameNodeSocket)
 			throws IOException, ClassNotFoundException {
 		ObjectInputStream inputStream = new ObjectInputStream(nameNodeSocket.getInputStream());
-		BlockReplicasLocation[] blockReplicasLocations = (BlockReplicasLocation[]) inputStream.readObject();
-		return blockReplicasLocations;
-	}
-
-	private HashSet<NodeLocation> groupBlockLocationsByDataNode(BlockReplicasLocation[] blockReplicasLocations) {
-		HashSet<NodeLocation> dataNodeLocations = new HashSet<>();
-		for (BlockReplicasLocation blockLocation : blockReplicasLocations) {
-			addDataNodeLocations(dataNodeLocations, blockLocation);
-		}
+		NodeLocation[] dataNodeLocations = (NodeLocation []) inputStream.readObject();
 		return dataNodeLocations;
 	}
 
-	private void addDataNodeLocations(HashSet<NodeLocation> dataNodeLocations, BlockReplicasLocation blockLocation) {
-		for (NodeLocation dataNodeLocation : blockLocation.dataNodeLocations) {
-			dataNodeLocations.add(dataNodeLocation);
-		}
-	}
-
-	private void deleteBlocksInDataNodes(HashSet<NodeLocation> dataNodeLocations) throws IOException {
-		for (NodeLocation dataNodeLocation : dataNodeLocations) {
-			deleteBlocksInSingleDataNode(dataNodeLocation);
-		}
-	}
-
-	private void deleteBlocksInSingleDataNode(NodeLocation dataNodeLocation) throws IOException {
-		Socket dataNodeSocket = new Socket(dataNodeLocation.address, dataNodeLocation.port);
-		sendDeleteRequest(dataNodeSocket);
+	private void deleteBlocksInDataNodes(NodeLocation[] dataNodeLocations) throws IOException {
+		NodeLocation firstNodeLocation = dataNodeLocations[0];
+		Socket dataNodeSocket = new Socket(firstNodeLocation.address, firstNodeLocation.port);
+		sendDeleteRequest(dataNodeSocket, dataNodeLocations);
 		dataNodeSocket.close();
 	}
 
-	private void sendDeleteRequest(Socket dataNodeSocket) throws IOException {
+	private void sendDeleteRequest(Socket dataNodeSocket, NodeLocation[] dataNodeLocations) throws IOException {
 		ObjectOutputStream outputStream = new ObjectOutputStream(dataNodeSocket.getOutputStream());
 		outputStream.writeUTF(MessageType.DELETE_BLOCK_REQUEST.name());
-		outputStream.writeUTF(rdfsFilename);
+		outputStream.writeObject(new DeleteBlockRequest(rdfsFilename, dataNodeLocations));
 		outputStream.flush();
 	}
 
