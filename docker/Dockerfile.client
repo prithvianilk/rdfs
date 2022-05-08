@@ -1,15 +1,14 @@
-FROM maven:3.8.4-jdk-11 AS build  
+FROM maven:3.8.5-openjdk-17 AS build  
 
 COPY rdfs-client/src /usr/src/app/rdfs-client/src  
-COPY rdfs-client/pom.xml /usr/src/app/rdfs-client
+COPY rdfs-client/pom.xml /usr/src/app/rdfs-client/pom.xml
 COPY rdfs-common/src /usr/src/app/rdfs-common/src  
-COPY rdfs-common/pom.xml /usr/src/app/rdfs-common
+COPY rdfs-common/pom.xml /usr/src/app/rdfs-common/pom.xml
+COPY docker/pom.client.xml /usr/src/app/pom.xml
+RUN mvn -f /usr/src/app/pom.xml clean package
+RUN mvn -f /usr/src/app/pom.xml install dependency:copy-dependencies
 
-RUN mvn -f /usr/src/app/rdfs/pom.xml clean package
-RUN mvn -f /usr/src/app/rdfs-common/pom.xml clean package
-
-FROM gcr.io/distroless/java  
-COPY --from=build /usr/src/app/rdfs-client/target/rdfs-1.0-SNAPSHOT.jar /usr/app/rdfs-client/rdfs-1.0-SNAPSHOT.jar  
-COPY --from=build /usr/src/app/rdfs-common/target/rdfs-common-1.0-SNAPSHOT.jar /usr/app/rdfs-common/rdfs-common-1.0-SNAPSHOT.jar  
-COPY rdfs-client/lib/picocli-4.6.3.jar usr/app/rdfs-client/picocli-4.6.3.jar
-ENTRYPOINT ["java", "-cp", "usr/app/rdfs-client/picocli-4.6.3.jar:rdfs-common/target/rdfs-common-1.0-SNAPSHOT.jar:usr/app/rdfs-client/rdfs-client-1.0-SNAPSHOT.jar", "com.rdfs.Client"]
+FROM gcr.io/distroless/java17-debian11
+COPY --from=build /usr/src/app/rdfs-client/target/rdfs-client-1.0-SNAPSHOT.jar /usr/app/rdfs-client-1.0-SNAPSHOT.jar  
+COPY --from=build /usr/src/app/rdfs-client/target/dependency /usr/app/
+ENTRYPOINT ["java", "-cp", "/usr/app/*", "com.rdfs.Client"]

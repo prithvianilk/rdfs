@@ -55,8 +55,12 @@ Example:
 
 `bin/rdfs-client.sh delete <rdfs-file-name> --name-node-address 0.0.0.0 --name-node-port 3620`
 
-## TODO
+## Build using Docker
 
-- [ ] Perform file data migration from unavailable datanode to available datanode.
-- [ ] Fix Dockerfiles.
-- [ ] Write better README documentation (it's pretty sloppy right now).
+### Build the RDFS CLI
+
+`docker build -t rdfs -f docker/Dockerfile.rdfs .`
+
+### Build the RDFS Client CLI
+
+`docker build -t rdfs-client -f docker/Dockerfile.client .`
