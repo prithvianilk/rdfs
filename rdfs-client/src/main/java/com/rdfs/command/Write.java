@@ -6,12 +6,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import com.rdfs.Constants;
 import com.rdfs.NodeLocation;
-import com.rdfs.message.GetNewDataNodeLocationsRequest;
 import com.rdfs.message.MessageType;
 import com.rdfs.message.WriteBlockRequest;
+import com.rdfs.operation.DeleteFileHandler;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -37,12 +38,12 @@ public class Write implements Runnable {
 	private File file;
 	private FileInputStream fileInputStream;
 	private Socket nameNodeSocket;
-	private GetNewDataNodeLocationsRequest getDataNodeLocationRequest;
 
 	@Override
 	public void run() {
 		try {
 			init();
+			deletePrexistingFileIfExists();
 			sendAllCompleteBlocks();
 			sendExtraBlockIfRemaining();
 			cleanUp();
@@ -55,7 +56,11 @@ public class Write implements Runnable {
 		file = new File(filename);
 		fileInputStream = new FileInputStream(file.toPath().toString());
 		file = new File(filename);
-		getDataNodeLocationRequest = new GetNewDataNodeLocationsRequest(rdfsFilename);
+	}
+
+	private void deletePrexistingFileIfExists() throws UnknownHostException, IOException {
+		DeleteFileHandler deleteFileOperation = new DeleteFileHandler(rdfsFilename, nameNodeAddress, nameNodePort);
+		deleteFileOperation.start();
 	}
 
 	private void sendAllCompleteBlocks() throws IOException, ClassNotFoundException {
@@ -81,7 +86,6 @@ public class Write implements Runnable {
 	private NodeLocation[] getDataNodeLocations()
 			throws IOException, ClassNotFoundException {
 		requestDataNodeLocations();
-		getDataNodeLocationRequest.isNewWrite = false;
 		NodeLocation[] dataNodeLocations = readDataNodeLocations();
 		return dataNodeLocations;
 	}
@@ -90,7 +94,7 @@ public class Write implements Runnable {
 		nameNodeSocket = new Socket(nameNodeAddress, nameNodePort);
 		ObjectOutputStream outputStream = new ObjectOutputStream(nameNodeSocket.getOutputStream());
 		outputStream.writeUTF(MessageType.GET_NEW_DATANODE_LOCATIONS_REQUEST.name());
-		outputStream.writeObject(getDataNodeLocationRequest);
+		outputStream.writeUTF(rdfsFilename);
 		outputStream.flush();
 	}
 

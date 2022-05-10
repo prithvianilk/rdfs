@@ -5,7 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import com.rdfs.message.MessageType;
-import com.rdfs.message.GetNewDataNodeLocationsRequest;
 import com.rdfs.namenode.DataNodeLocationStore;
 import com.rdfs.NodeLocation;
 
@@ -19,20 +18,15 @@ public class ClientHandler extends Handler {
     }
 
     private void getNewDataNodeLocations() throws IOException, ClassNotFoundException {
-        GetNewDataNodeLocationsRequest getNewDataNodeLocationsRequest = (GetNewDataNodeLocationsRequest) inputStream.readObject();
-        String filename = getNewDataNodeLocationsRequest.filename;
-        boolean isNewWrite = getNewDataNodeLocationsRequest.isNewWrite;
-        if (isNewWrite) {
-            dataNodeLocationStore.deleteFileMetaData(filename);
-        }
-        NodeLocation[] dataNodeLocations = dataNodeLocationStore.addBlockNodeLocations(filename);
-        outputStream.writeObject(dataNodeLocations);
+        String filename = inputStream.readUTF();
+        NodeLocation[] newDataNodeLocations = dataNodeLocationStore.addBlockNodeLocations(filename);
+        outputStream.writeObject(newDataNodeLocations);
         outputStream.flush();
     }
 
     private void getDataNodeLocations() throws IOException {
-        String fileName = inputStream.readUTF();
-        NodeLocation[] dataNodeLocations = dataNodeLocationStore.getDataNodeLocations(fileName);
+        String filename = inputStream.readUTF();
+        NodeLocation[] dataNodeLocations = dataNodeLocationStore.getDataNodeLocations(filename);
         outputStream.writeObject(dataNodeLocations);
         outputStream.flush();
     }

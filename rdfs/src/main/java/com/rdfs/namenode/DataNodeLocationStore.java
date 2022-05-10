@@ -46,10 +46,6 @@ public class DataNodeLocationStore {
         NodeLocation[] nodeLocations = new NodeLocation[numberOfBlocks];
         for (int i = 0; i < numberOfBlocks; ++i) {
             NodeLocation[] replicaNodeLocations = blockLocations.get(i);
-            // for (NodeLocation nodeLocation: replicaNodeLocations) {
-            //     System.out.println(nodeLocation.toString());
-            // }
-            // System.out.println();
             NodeLocation firstLocation = replicaNodeLocations[0];
             nodeLocations[i] = firstLocation;
         }
@@ -93,6 +89,10 @@ public class DataNodeLocationStore {
 
     public NodeLocation[] getBlockLocations(String fileName) {
         ArrayList<NodeLocation[]> blockLocationsArrayList = fileNameBlockLocationMap.get(fileName);
+        boolean fileDoesNotExist = blockLocationsArrayList == null;
+        if (fileDoesNotExist) {
+            return null;
+        }
         int numberOfBlocks = blockLocationsArrayList.size();
         HashSet<NodeLocation> uniqueNodeLocations = new HashSet<NodeLocation>();
         for (int i = 0; i < numberOfBlocks; ++i) {
