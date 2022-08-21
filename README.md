@@ -2,65 +2,101 @@
 
 An attempt to make a reliable, distributed file system inspired by Hadoop File System.
 
-## Project Structure
+## The RDFS Project consists of 2 parts
 
 ### 1. RDFS Main
 - A cli tool to start and configure Data Node and Name Node servers.
 
 ### Commands
 
-### `namenode`
+### namenode
 
 Starts a Name Node server on a host.
 
-Example: 
+Usage: 
 
-`bin/rdfs.sh namenode --name-node-port 3620 --name-node-heartbeat-port 3630`
+```
+bin/rdfs.sh namenode 
+
+Flags:
+--name-node-port, Default: 3620 
+--name-node-heartbeat-port, Default: 3630
+```
 
 
-### `datanode`
+### datanode
 
 Starts a Data Node server on a host and join it to the RDFS cluster.
 
-Example: 
+Usage: 
 
-`bin/rdfs.sh datanode --name-node-address 0.0.0.0 --name-node-heartbeat-port 3630 --data-node-port 3530`
+```
+bin/rdfs.sh datanode 
+
+Flags:
+--name-node-address, Default: 0.0.0.0 
+--name-node-heartbeat-port, Default: 3630 
+--data-node-port, Default: 3530
+```
 
 ### 2. RDFS Client
 - A cli client tool to interact with RDFS. 
 
 ### Commands
 
-### `write`
+### write
 
 Writes the contents of a local file onto RDFS. 
 
-Example: 
+Usage: 
 
-`bin/rdfs-client.sh write <local-filepath> <rdfs-file-name> --name-node-address 0.0.0.0 --name-node-port 3620 --block-size <preferred block size>`
+```
+bin/rdfs-client.sh write <local-filepath> <rdfs-file-name> 
 
-### `read` 
+Flags:
+--name-node-address, Default: 0.0.0.0
+--name-node-port, Default: 3620
+--block-size, Default: 128 x 10^6
+```
+
+### read 
 
 Reads the contents of a file on RDFS and writes it to a file locally.
 
-Example: 
+Usage: 
 
-`bin/rdfs-client.sh read <new-local-filename> <rdfs-file-name> --name-node-address 0.0.0.0 --name-node-port 3620`
+```
+bin/rdfs-client.sh read <new-local-filename> <rdfs-file-name> 
 
-### `delete`
+Flags:
+--name-node-address, Default: 0.0.0.0 
+--name-node-port, Default: 3620
+```
+
+### delete
 
 Deletes a file from RDFS.
 
-Example: 
+Usage: 
 
-`bin/rdfs-client.sh delete <rdfs-file-name> --name-node-address 0.0.0.0 --name-node-port 3620`
+```
+bin/rdfs-client.sh delete <rdfs-file-name> 
+
+Flags:
+--name-node-address, Default: 0.0.0.0 
+--name-node-port, Default: 3620
+```
 
 ## Build using Docker
 
 ### Build the RDFS CLI
 
-`docker build -t rdfs -f docker/Dockerfile.rdfs .`
+```
+docker build -t rdfs -f docker/Dockerfile.rdfs .
+```
 
 ### Build the RDFS Client CLI
 
-`docker build -t rdfs-client -f docker/Dockerfile.client .`
+```
+docker build -t rdfs-client -f docker/Dockerfile.client .
+```
